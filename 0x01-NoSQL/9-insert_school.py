@@ -6,14 +6,7 @@ An insert_school function module.
 
 def insert_school(mongo_collection, **kwargs):
     '''
-    Returns an updated list following a new document insertion.
+    Returns the document insertion ID.
     '''
-    doc = {}
-    for key, value in kwargs.items():
-        doc[key] = value
-    mongo_collection.insert_one(doc)
-    return mongo_collection
-
-
-if __name__ == "__main__":
-    insert_school()
+    result = mongo_collection.insert_one(kwargs)
+    return result.inserted_id
