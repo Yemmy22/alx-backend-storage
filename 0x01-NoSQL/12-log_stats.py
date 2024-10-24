@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-from pymongo import MongoClient
 '''
 A log_stat functon module
 '''
+
+from pymongo import MongoClient
 
 
 def log_stats():
