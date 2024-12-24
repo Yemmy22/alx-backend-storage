@@ -1,42 +1,55 @@
 #!/usr/bin/env python3
 """
-A web module.
+Web page caching module using Redis
 """
-
 
 import redis
 import requests
 from functools import wraps
+from typing import Callable
 
+# Initialize Redis client
 r = redis.Redis()
 
 
-def url_access_count(method):
-    """decorator for get_page function"""
+def url_access_count(method: Callable) -> Callable:
+    """
+    Decorator for tracking URL access counts
+    and caching responses
+    """
     @wraps(method)
-    def wrapper(url):
-        """wrapper function"""
-        key = "cached:" + url
-        cached_value = r.get(key)
-        if cached_value:
-            return cached_value.decode("utf-8")
+    def wrapper(url: str) -> str:
+        """
+        Wrapper function implementing caching logic
+        """
+        # Keys for cache and count
+        cache_key = f"cached:{url}"
+        count_key = f"count:{url}"
 
-            # Get new content and update cache
-        key_count = "count:" + url
+        # Increment the access count before checking cache
+        r.incr(count_key)
+
+        # Check if content is cached
+        cached_content = r.get(cache_key)
+        if cached_content:
+            return cached_content.decode('utf-8')
+
+        # Get new content if not cached
         html_content = method(url)
 
-        r.incr(key_count)
-        r.set(key, html_content, ex=10)
-        r.expire(key, 10)
+        # Cache the new content with expiration
+        r.setex(cache_key, 10, html_content)
+
         return html_content
+
     return wrapper
 
 
 @url_access_count
 def get_page(url: str) -> str:
-    """obtain the HTML content of a particular"""
-    results = requests.get(url)
-    return results.text
+    """Get HTML content of a web page"""
+    response = requests.get(url)
+    return response.text
 
 
 if __name__ == "__main__":
